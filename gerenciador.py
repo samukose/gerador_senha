@@ -10,30 +10,28 @@ KEY_FILE = "chave.key"
 
 
 
-def gerar_senha(comprimento=16, incluir_maiusculas=True, incluir_numeros=True, incluir_especiais=True):
-    if comprimento < (incluir_maiusculas + incluir_numeros + incluir_especiais + 1):
-        raise ValueError("O comprimento é muito curto para as opções selecionadas.")
+def gerar_senha(comprimento=16):
+    if comprimento < 4:
+        raise ValueError("O comprimento mínimo para uma senha segura é 4 caracteres.")
 
-    senha_obrigatoria = [secrets.choice(string.ascii_lowercase)]
-    caracteres_pool = string.ascii_lowercase
+    leiras_minusculas = string.ascii_lowercase
+    leiras_maiusculas = string.ascii_uppercase
+    digitos = string.digits
+    especiais = "!@#$%^&*()-_=+"
 
-    if incluir_maiusculas:
-        senha_obrigatoria.append(secrets.choice(string.ascii_uppercase))
-        caracteres_pool += string.ascii_uppercase
-    if incluir_numeros:
-        senha_obrigatoria.append(secrets.choice(string.digits))
-        caracteres_pool += string.digits
-    if incluir_especiais:
-        senha_obrigatoria.append(secrets.choice(string.punctuation))
-        caracteres_pool += string.punctuation
+    todos_caracteres = leiras_minusculas + leiras_maiusculas + digitos + especiais
 
-    comprimento_restante = comprimento - len(senha_obrigatoria)
-    senha_restante = [secrets.choice(caracteres_pool) for _ in range(comprimento_restante)]
+    senha = [
+        secrets.choice(leiras_minusculas),
+        secrets.choice(leiras_maiusculas),
+        secrets.choice(digitos),
+        secrets.choice(especiais)
+    ]
 
-    senha_completa = senha_obrigatoria + senha_restante
-    secrets.SystemRandom().shuffle(senha_completa)
+    senha += [secrets.choice(todos_caracteres) for _ in range(comprimento - 4)]
+    secrets.SystemRandom().shuffle(senha)
 
-    return ''.join(senha_completa)
+    return "".join(senha)
 
 
 def obter_chave_criptografia():
@@ -48,6 +46,7 @@ def obter_chave_criptografia():
 
 
 def inicializar_banco():
+    
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
         cursor.execute('''
@@ -85,20 +84,17 @@ def listar_senhas(cipher):
     for linha in linhas:
         servico, usuario, senha_cripto = linha
 
-  
+     
         try:
             senha_descriptografada = cipher.decrypt(senha_cripto.encode()).decode()
             print(f"Serviço: {servico} | Usuário: {usuario} | Senha: {senha_descriptografada}")
         except InvalidToken:
             print(f"Serviço: {servico} | Usuário: {usuario} | "
-                  f"⚠️  Não foi possível descriptografar (chave inválida ou dado corrompido).")
+                  f" Não foi possível descriptografar (chave inválida ou dado corrompido).")
 
 
 def ler_comprimento_senha():
-    """
-    2. Validação no input do usuário: garante que o comprimento informado
-    é um inteiro válido, sem derrubar o programa com um erro não tratado.
-    """
+ 
     entrada = input("Comprimento da senha (padrão 16): ").strip()
 
     if entrada == "":
