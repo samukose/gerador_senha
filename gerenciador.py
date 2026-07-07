@@ -8,8 +8,6 @@ DB_NAME = "gerenciador_senhas.db"
 KEY_FILE = "chave.key"
 
 
-
-
 def gerar_senha(comprimento=16):
     if comprimento < 4:
         raise ValueError("O comprimento mínimo para uma senha segura é 4 caracteres.")
@@ -46,7 +44,6 @@ def obter_chave_criptografia():
 
 
 def inicializar_banco():
-    
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
         cursor.execute('''
@@ -84,7 +81,6 @@ def listar_senhas(cipher):
     for linha in linhas:
         servico, usuario, senha_cripto = linha
 
-     
         try:
             senha_descriptografada = cipher.decrypt(senha_cripto.encode()).decode()
             print(f"Serviço: {servico} | Usuário: {usuario} | Senha: {senha_descriptografada}")
@@ -93,8 +89,24 @@ def listar_senhas(cipher):
                   f" Não foi possível descriptografar (chave inválida ou dado corrompido).")
 
 
+def apagar_senha(servico, usuario):
+    """Remove a credencial do banco de dados correspondente ao serviço e usuário."""
+    with sqlite3.connect(DB_NAME) as conn:
+        cursor = conn.cursor()
+        # Executa a query para deletar
+        cursor.execute('''
+            DELETE FROM credenciais 
+            WHERE LOWER(servico) = LOWER(?) AND LOWER(usuario) = LOWER(?)
+        ''', (servico, usuario))
+        
+        # Verifica se alguma linha foi realmente afetada/deletada
+        if cursor.rowcount > 0:
+            print(f"\nSucesso: A credencial para '{servico}' ({usuario}) foi apagada.")
+        else:
+            print(f"\nErro: Nenhuma credencial encontrada para '{servico}' com o usuário '{usuario}'.")
+
+
 def ler_comprimento_senha():
- 
     entrada = input("Comprimento da senha (padrão 16): ").strip()
 
     if entrada == "":
@@ -121,7 +133,8 @@ if __name__ == "__main__":
         print("\n*** GERENCIADOR E GERADOR DE SENHAS ***")
         print("1. Gerar e Salvar Nova Senha")
         print("2. Visualizar Senhas Salvas")
-        print("3. Sair")
+        print("3. Apagar Senha Salva")
+        print("4. Sair")
 
         opcao = input("Escolha uma opção: ")
 
@@ -143,6 +156,11 @@ if __name__ == "__main__":
             listar_senhas(gerenciador_cripto)
 
         elif opcao == "3":
+            servico = input("Nome do serviço (ex: Netflix, Github): ")
+            usuario = input("Nome de usuário/E-mail: ")
+            apagar_senha(servico, usuario)
+
+        elif opcao == "4":
             print("Saindo... ")
             break
         else:
