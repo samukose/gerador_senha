@@ -90,16 +90,16 @@ def listar_senhas(cipher):
 
 
 def apagar_senha(servico, usuario):
-    """Remove a credencial do banco de dados correspondente ao serviço e usuário."""
+    
     with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
-        # Executa a query para deletar
+       
         cursor.execute('''
             DELETE FROM credenciais 
             WHERE LOWER(servico) = LOWER(?) AND LOWER(usuario) = LOWER(?)
         ''', (servico, usuario))
         
-        # Verifica se alguma linha foi realmente afetada/deletada
+        
         if cursor.rowcount > 0:
             print(f"\nSucesso: A credencial para '{servico}' ({usuario}) foi apagada.")
         else:
